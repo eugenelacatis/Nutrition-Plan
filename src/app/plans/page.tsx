@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
-import { MealPlan } from '@/lib/api'
+import { apiClient, Plan } from '@/lib/api'
 
 export default function PlansPage() {
   const { user } = useAuth()
-  const [plans, setPlans] = useState<MealPlan[]>([])
+  const [plans, setPlans] = useState<Omit<Plan, 'meals'>[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -17,19 +17,17 @@ export default function PlansPage() {
   }, [user])
 
   const fetchPlans = async () => {
-    // Simulate loading
     setLoading(true)
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Get plans from localStorage
-    const storedPlans = JSON.parse(localStorage.getItem('nutrition-plans') || '[]')
-    setPlans(storedPlans)
-    setLoading(false)
-  }
-
-  const clearPlans = () => {
-    localStorage.removeItem('nutrition-plans')
-    setPlans([])
+    try {
+      const response = await apiClient.listPlans()
+      if (response.success) {
+        setPlans(response.data)
+      }
+    } catch (error) {
+      console.error('Error fetching plans:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (!user) {
@@ -59,18 +57,12 @@ export default function PlansPage() {
             <p className="mt-2 text-gray-600">View and manage your personalized meal plans</p>
           </div>
           <div className="flex gap-4">
-            <button
-              onClick={clearPlans}
-              className="px-4 py-2 text-sm text-red-600 hover:text-red-700 border border-red-300 rounded-md hover:bg-red-50"
+            <Link
+              href="/plans/new"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
             >
-              Clear All Plans
-            </button>
-          <Link
-            href="/plans/new"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            Create New Plan
-          </Link>
+              Create New Plan
+            </Link>
           </div>
         </div>
 
@@ -109,7 +101,7 @@ export default function PlansPage() {
                   
                   <div className="mt-4 flex justify-between items-center">
                     <div className="text-xs text-gray-500">
-                      Created {new Date(plan.created_at).toLocaleDateString()}
+                      Created {new Date(plan.createdAt).toLocaleDateString()}
                     </div>
                     <Link
                       href={`/plans/${plan.id}`}
