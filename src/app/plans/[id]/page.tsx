@@ -3,36 +3,51 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { MealPlan } from '@/lib/api'
+import { apiClient, Plan, Food } from '@/lib/api'
 import Link from 'next/link'
+import MealConfirmation from '@/components/plans/MealConfirmation'
 
 export default function PlanDetailPage() {
   const { user } = useAuth()
   const params = useParams()
   const router = useRouter()
-  const [plan, setPlan] = useState<MealPlan | null>(null)
+  const [plan, setPlan] = useState<Plan | null>(null)
+  const [foods, setFoods] = useState<Food[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (user && params.id) {
       fetchPlan()
+      fetchFoods()
     }
   }, [user, params.id])
 
   const fetchPlan = async () => {
     setLoading(true)
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    // Get plan from localStorage
-    const storedPlans = JSON.parse(localStorage.getItem('nutrition-plans') || '[]')
-    const foundPlan = storedPlans.find((p: MealPlan) => p.id === params.id)
-    
-    if (foundPlan) {
-      setPlan(foundPlan)
-    } else {
+    try {
+      const response = await apiClient.getPlan(params.id as string)
+      if (response.success) {
+        setPlan(response.data)
+      } else {
+        router.push('/plans')
+      }
+    } catch (error) {
+      console.error('Error fetching plan:', error)
       router.push('/plans')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
+  }
+
+  const fetchFoods = async () => {
+    try {
+      const response = await apiClient.getFoods()
+      if (response.success) {
+        setFoods(response.data)
+      }
+    } catch (error) {
+      console.error('Error fetching foods:', error)
+    }
   }
 
   if (!user) {
@@ -95,7 +110,7 @@ export default function PlanDetailPage() {
             </div>
             <div className="text-right">
               <div className="text-sm text-gray-500">Created</div>
-              <div className="font-medium">{new Date(plan.created_at).toLocaleDateString()}</div>
+              <div className="font-medium">{new Date(plan.createdAt).toLocaleDateString()}</div>
             </div>
           </div>
         </div>
@@ -133,17 +148,22 @@ export default function PlanDetailPage() {
 
         {/* Meals */}
         <div className="space-y-8">
-          {plan.dailyMeals.map((dailyMeal) => (
-            <div key={dailyMeal.day} className="bg-white rounded-lg shadow">
+          {Object.entries(
+            plan.meals.reduce<Record<string, typeof plan.meals>>((groups, meal) => {
+              ;(groups[meal.day] ||= []).push(meal)
+              return groups
+            }, {})
+          ).map(([day, meals]) => (
+            <div key={day} className="bg-white rounded-lg shadow">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900">Meals</h3>
               </div>
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {dailyMeal.meals.map((meal, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-4">
+                  {meals.map((meal) => (
+                    <div key={meal.id} className="border border-gray-200 rounded-lg p-4">
                       <h4 className="font-semibold text-gray-900 mb-2">{meal.name}</h4>
-                      
+
                       {/* Nutrition Info */}
                       <div className="grid grid-cols-3 gap-2 text-sm mb-3">
                         <div>
@@ -187,10 +207,12 @@ export default function PlanDetailPage() {
                       </div>
 
                       {/* Time */}
-                      <div className="flex justify-between text-xs text-gray-500">
+                      <div className="flex justify-between text-xs text-gray-500 mb-3">
                         <span>Prep: {meal.prepTime}min</span>
                         <span>Cook: {meal.cookTime}min</span>
                       </div>
+
+                      <MealConfirmation planMeal={meal} foods={foods} />
                     </div>
                   ))}
                 </div>
