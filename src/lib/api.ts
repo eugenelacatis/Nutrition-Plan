@@ -1,6 +1,6 @@
-// API client for communicating with the backend
+// API client for communicating with the nutrition API routes
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = '/api';
 
 export interface NutritionGoals {
   goal: 'weight_loss' | 'muscle_gain' | 'maintenance';
