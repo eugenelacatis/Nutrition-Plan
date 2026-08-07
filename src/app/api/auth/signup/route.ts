@@ -2,12 +2,21 @@ import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
 export async function POST(request: Request) {
   const { email, password } = await request.json()
 
-  if (!email || !password) {
+  if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
     return NextResponse.json(
       { error: 'Email and password are required' },
+      { status: 400 }
+    )
+  }
+
+  if (!EMAIL_REGEX.test(email)) {
+    return NextResponse.json(
+      { error: 'Please enter a valid email address' },
       { status: 400 }
     )
   }
