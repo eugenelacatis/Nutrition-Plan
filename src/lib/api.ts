@@ -11,11 +11,66 @@ export interface NutritionGoals {
   fatTarget: number;
 }
 
-export interface MealPlan {
+export interface PlanMeal {
+  id: string;
+  day: string;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  ingredients: string[];
+  instructions: string[];
+  prepTime: number;
+  cookTime: number;
+  mealLogs?: MealLog[];
+}
+
+export interface Plan {
   id: string;
   name: string;
   description: string;
-  dailyMeals: DailyMeal[];
+  totalCalories: number;
+  totalProtein: number;
+  totalCarbs: number;
+  totalFat: number;
+  aiGenerated: boolean;
+  createdAt: string;
+  meals: PlanMeal[];
+}
+
+export interface Food {
+  id: string;
+  name: string;
+  caloriesPer100g: number;
+  proteinPer100g: number;
+  carbsPer100g: number;
+  fatPer100g: number;
+}
+
+export interface MealLog {
+  id: string;
+  planMealId: string;
+  status: 'as_planned' | 'substituted' | 'skipped';
+  substituteFoodId: string | null;
+  substituteQuantityG: number | null;
+  date: string;
+}
+
+export interface MacroDiff {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+// Demo plans (from demo-plan endpoint) use the old nested shape since
+// they're not persisted to the database.
+export interface DemoMealPlan {
+  id: string;
+  name: string;
+  description: string;
+  dailyMeals: { day: string; meals: DemoMeal[] }[];
   totalCalories: number;
   totalProtein: number;
   totalCarbs: number;
@@ -23,12 +78,7 @@ export interface MealPlan {
   created_at: string;
 }
 
-export interface DailyMeal {
-  day: string;
-  meals: Meal[];
-}
-
-export interface Meal {
+export interface DemoMeal {
   name: string;
   calories: number;
   protein: number;
@@ -48,6 +98,11 @@ export interface DailyLog {
   digestionRating: number;
   date: string;
   created_at: string;
+}
+
+export interface UserGoal {
+  goalWeight: number | null;
+  goalDirection: 'lose' | 'gain' | 'maintain' | null;
 }
 
 export interface OptimalScore {
@@ -91,21 +146,59 @@ class ApiClient {
     }
   }
 
+  private parsePlan(raw: any): Plan {
+    return {
+      ...raw,
+      meals: raw.meals.map((meal: any) => ({
+        ...meal,
+        ingredients: JSON.parse(meal.ingredients),
+        instructions: JSON.parse(meal.instructions),
+      })),
+    };
+  }
+
   async generateMealPlan(
     goals: string,
     restrictions: string[] = []
-  ): Promise<{ success: boolean; data: MealPlan }> {
-    return this.request('/nutrition/generate-plan', {
+  ): Promise<{ success: boolean; data: Plan }> {
+    const response = await this.request<{ success: boolean; data: any }>('/nutrition/generate-plan', {
       method: 'POST',
       body: JSON.stringify({
         goals,
         restrictions,
       }),
     });
+    return { ...response, data: this.parsePlan(response.data) };
   }
 
-  async getDemoPlan(goals: string): Promise<{ success: boolean; data: MealPlan }> {
+  async getDemoPlan(goals: string): Promise<{ success: boolean; data: DemoMealPlan }> {
     return this.request(`/nutrition/demo-plan/${goals}`);
+  }
+
+  async listPlans(): Promise<{ success: boolean; data: Omit<Plan, 'meals'>[] }> {
+    return this.request('/nutrition/plans');
+  }
+
+  async getPlan(id: string): Promise<{ success: boolean; data: Plan }> {
+    const response = await this.request<{ success: boolean; data: any }>(`/nutrition/plans/${id}`);
+    return { ...response, data: this.parsePlan(response.data) };
+  }
+
+  async getFoods(): Promise<{ success: boolean; data: Food[] }> {
+    return this.request('/nutrition/foods');
+  }
+
+  async logMeal(
+    planMealId: string,
+    status: 'as_planned' | 'substituted' | 'skipped',
+    substituteFoodId?: string,
+    substituteQuantityG?: number,
+    date?: string
+  ): Promise<{ success: boolean; data: { mealLog: MealLog; macroDiff: MacroDiff | null } }> {
+    return this.request('/nutrition/meal-log', {
+      method: 'POST',
+      body: JSON.stringify({ planMealId, status, substituteFoodId, substituteQuantityG, date }),
+    });
   }
 
   async logDailyMetrics(
@@ -134,6 +227,20 @@ class ApiClient {
 
   async getOptimalScore(): Promise<{ success: boolean; data: OptimalScore }> {
     return this.request('/nutrition/optimal-score');
+  }
+
+  async getGoal(): Promise<{ success: boolean; data: UserGoal }> {
+    return this.request('/user/goal');
+  }
+
+  async setGoal(
+    goalWeight: number | null,
+    goalDirection: 'lose' | 'gain' | 'maintain' | null
+  ): Promise<{ success: boolean; data: UserGoal }> {
+    return this.request('/user/goal', {
+      method: 'PATCH',
+      body: JSON.stringify({ goalWeight, goalDirection }),
+    });
   }
 }
 
