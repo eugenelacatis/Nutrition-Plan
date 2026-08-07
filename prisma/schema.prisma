@@ -8,11 +8,15 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
-  passwordHash String
-  createdAt    DateTime   @default(now())
-  dailyLogs    DailyLog[]
+  id            String     @id @default(cuid())
+  email         String     @unique
+  passwordHash  String
+  goalWeight    Float?
+  goalDirection String?
+  createdAt     DateTime   @default(now())
+  dailyLogs     DailyLog[]
+  plans         Plan[]
+  mealLogs      MealLog[]
 }
 
 model DailyLog {
@@ -27,4 +31,67 @@ model DailyLog {
   createdAt       DateTime @default(now())
 
   @@index([userId])
+}
+
+model Plan {
+  id            String     @id @default(cuid())
+  userId        String
+  user          User       @relation(fields: [userId], references: [id])
+  name          String
+  description   String
+  totalCalories Int
+  totalProtein  Int
+  totalCarbs    Int
+  totalFat      Int
+  aiGenerated   Boolean    @default(false)
+  createdAt     DateTime   @default(now())
+  meals         PlanMeal[]
+
+  @@index([userId])
+}
+
+model PlanMeal {
+  id           String    @id @default(cuid())
+  planId       String
+  plan         Plan      @relation(fields: [planId], references: [id])
+  day          String
+  name         String
+  calories     Int
+  protein      Int
+  carbs        Int
+  fat          Int
+  ingredients  String
+  instructions String
+  prepTime     Int
+  cookTime     Int
+  mealLogs     MealLog[]
+
+  @@index([planId])
+}
+
+model Food {
+  id               String    @id @default(cuid())
+  name             String    @unique
+  caloriesPer100g  Int
+  proteinPer100g   Float
+  carbsPer100g     Float
+  fatPer100g       Float
+  mealLogs         MealLog[]
+}
+
+model MealLog {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id])
+  planMealId          String
+  planMeal            PlanMeal @relation(fields: [planMealId], references: [id])
+  status              String
+  substituteFoodId    String?
+  substituteFood      Food?    @relation(fields: [substituteFoodId], references: [id])
+  substituteQuantityG Float?
+  date                String
+  createdAt           DateTime @default(now())
+
+  @@index([userId])
+  @@index([planMealId])
 }
