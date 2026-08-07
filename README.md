@@ -20,7 +20,7 @@ Traditional nutrition apps treat everyone the same. This app recognizes that a b
 
 ## How it works
 
-The app uses AI-powered meal generation to create personalized nutrition plans based on:
+The app uses Claude-powered meal generation to create personalized nutrition plans based on:
 - **Fitness goals** (weight loss, muscle gain, maintenance, energy boost)
 - **Dietary restrictions** (vegetarian, gluten-free, etc.)
 - **Nutrition targets** (calories, protein, carbs, fat)
@@ -31,63 +31,45 @@ The system is optimized for bodybuilder nutrition patterns, with specific meal t
 
 ```
 Nutrition-Plan/
-├── frontend/          # Next.js 14 + TypeScript + Tailwind CSS
-│   ├── src/
-│   │   ├── app/       # Next.js App Router pages
-│   │   ├── components/ # React components
-│   │   ├── contexts/  # React contexts
-│   │   └── lib/       # Frontend utilities and API client
-│   └── package.json
-├── backend/           # Express.js + Node.js API
-│   ├── src/
-│   │   ├── routes/    # API routes
-│   │   ├── services/  # Business logic and AI integration
-│   │   └── index.js   # Express server
-│   └── package.json
+├── src/
+│   ├── app/            # Next.js App Router pages + API routes
+│   │   └── api/
+│   │       ├── auth/       # Auth.js handlers + signup
+│   │       └── nutrition/  # Meal plan + daily log routes
+│   ├── components/     # React components
+│   ├── contexts/       # React contexts
+│   ├── lib/            # API client, Prisma client, nutrition AI service
+│   └── auth.ts          # Auth.js configuration
+├── prisma/
+│   └── schema.prisma    # User + DailyLog models (SQLite)
 └── README.md
 ```
 
 ## Getting Started
 
-### Frontend
 ```bash
-cd frontend
 npm install
-npm run dev
-```
-
-### Backend
-```bash
-cd backend
-npm install
+npx prisma migrate dev
 npm run dev
 ```
 
 ### Environment Variables
 
-**Frontend** (`.env.local`):
+**`.env`**:
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-```
-
-**Backend** (`.env`):
-```env
-GEMINI_API_KEY=your_gemini_api_key_here
-PORT=5000
+DATABASE_URL="file:./dev.db"
+AUTH_SECRET="generate_with_openssl_rand_base64_32"
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
 ```
 
 ## Tech Stack
 
-### Frontend
-- **Next.js 14** - React framework with App Router
+- **Next.js 14** - React framework with App Router (frontend + API routes)
 - **TypeScript** - Type-safe development
 - **Tailwind CSS** - Utility-first styling
-- **React Context** - State management
-
-### Backend
-- **Express.js** - Node.js web framework
-- **Google Gemini API** - AI-powered meal generation
-- **CORS** - Cross-origin resource sharing
+- **Prisma + SQLite** - Data persistence for users and daily logs
+- **Auth.js (NextAuth v5)** - Credentials-based authentication
+- **Anthropic Claude API** - AI-powered meal generation (structured outputs)
 
 ## Features
 
@@ -113,14 +95,9 @@ The app emphasizes **bodybuilder-first** nutrition planning, recognizing that se
 
 ## Deployment
 
-### Frontend (Vercel)
+### Vercel
 ```bash
-cd frontend
 vercel --prod
 ```
 
-### Backend (Railway/Render)
-```bash
-cd backend
-# Deploy to your preferred platform
-```
+SQLite works for local development; for production, point `DATABASE_URL` at a hosted Postgres/SQLite-compatible database and update `prisma/schema.prisma`'s `provider` accordingly.
