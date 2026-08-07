@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import DailyLogForm from '@/components/DailyLogForm'
 import OptimalScoreDashboard from '@/components/ScoreDashboard'
+import GoalSettingsForm from '@/components/GoalSettingsForm'
 
 export default function DashboardPage() {
   const [showLogForm, setShowLogForm] = useState(false)
@@ -38,6 +39,8 @@ export default function DashboardPage() {
             <DailyLogForm onLogSubmitted={handleLogSubmitted} />
           </div>
         )}
+
+        <GoalSettingsForm />
 
         {/* Optimal Score Dashboard */}
         <OptimalScoreDashboard key={refreshDashboard} />
