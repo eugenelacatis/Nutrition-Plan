@@ -132,7 +132,7 @@ Build a practical, AI-assisted meal planning and tracking tool tailored for body
 - [x] Basic meal plan generation
 - [x] User authentication
 - [x] Daily tracking system (weight, sleep, digestion)
-- [ ] Meal confirmation and substitution tracking
+- [x] Meal confirmation and substitution tracking
 - [x] Basic optimal score calculation
 - [x] Simple dashboard with recommendations
 
