@@ -64,21 +64,22 @@ export interface MacroDiff {
   fat: number;
 }
 
-// Demo plans (from demo-plan endpoint) use the old nested shape since
-// they're not persisted to the database.
-export interface DemoMealPlan {
+// Trial plans (from try-plan endpoint) use the nested shape since
+// they're not persisted to the database until claimed.
+export interface TrialMealPlan {
   id: string;
   name: string;
   description: string;
-  dailyMeals: { day: string; meals: DemoMeal[] }[];
+  dailyMeals: { day: string; meals: TrialMeal[] }[];
   totalCalories: number;
   totalProtein: number;
   totalCarbs: number;
   totalFat: number;
   created_at: string;
+  aiGenerated: boolean;
 }
 
-export interface DemoMeal {
+export interface TrialMeal {
   name: string;
   calories: number;
   protein: number;
@@ -171,8 +172,20 @@ class ApiClient {
     return { ...response, data: this.parsePlan(response.data) };
   }
 
-  async getDemoPlan(goals: string): Promise<{ success: boolean; data: DemoMealPlan }> {
-    return this.request(`/nutrition/demo-plan/${goals}`);
+  async tryPlan(goals: string): Promise<{ success: boolean; data: TrialMealPlan }> {
+    return this.request(`/nutrition/try-plan/${goals}`);
+  }
+
+  async claimGuestPlan(payload: {
+    goals: string;
+    restrictions: string[];
+    plan: TrialMealPlan;
+  }): Promise<{ success: boolean; data: Plan }> {
+    const response = await this.request<{ success: boolean; data: any }>('/nutrition/claim-guest-plan', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return { ...response, data: this.parsePlan(response.data) };
   }
 
   async listPlans(): Promise<{ success: boolean; data: Omit<Plan, 'meals'>[] }> {

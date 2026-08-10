@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from 'react'
 import { SessionProvider, useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react'
+import { apiClient } from '@/lib/api'
 
 interface LocalUser {
   id: string
@@ -18,6 +19,23 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+export const GUEST_PLAN_STORAGE_KEY = 'guest-plan-pending'
+
+async function claimPendingGuestPlan() {
+  const raw = sessionStorage.getItem(GUEST_PLAN_STORAGE_KEY)
+  if (!raw) return
+
+  try {
+    const pending = JSON.parse(raw)
+    await apiClient.claimGuestPlan(pending)
+    sessionStorage.removeItem(GUEST_PLAN_STORAGE_KEY)
+  } catch (error) {
+    // Best-effort: leave the pending plan in sessionStorage so it can be
+    // retried later rather than silently losing the guest's trial plan.
+    console.error('Failed to claim guest plan:', error)
+  }
+}
+
 function AuthContextBridge({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
 
@@ -31,6 +49,8 @@ function AuthContextBridge({ children }: { children: React.ReactNode }) {
     if (result?.error) {
       throw new Error('Invalid email or password')
     }
+
+    await claimPendingGuestPlan()
   }
 
   const signUp = async (email: string, password: string) => {
