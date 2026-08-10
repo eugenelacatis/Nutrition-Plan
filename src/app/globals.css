@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --cream-50: 250 246 238;
+  --cream-100: 240 234 220;
+  --ink-900: 35 31 26;
+  --ember-500: 232 137 74;
+  --ember-700: 168 80 34;
+  --sage-400: 143 168 136;
+  --sage-600: 90 122 82;
+  --gold-400: 217 165 68;
+  --gold-700: 138 98 20;
+  --brick-500: 196 97 74;
+  --brick-600: 154 64 46;
+}
+
 /* Basic reset */
 * {
   box-sizing: border-box;
@@ -10,4 +24,13 @@
 html,
 body {
   height: 100%;
-} 
+}
+
+body {
+  background-color: rgb(var(--cream-50));
+  color: rgb(var(--ink-900));
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

@@ -99,3 +99,9 @@ temp/
 
 # Local development
 .local/
+.vercel
+.env*.local
+.env*
+
+# Playwright MCP test artifacts
+.playwright-mcp/
