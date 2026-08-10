@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { apiClient, Food, MacroDiff, PlanMeal } from '@/lib/api'
+import Button from '@/components/ui/Button'
 
 interface MealConfirmationProps {
   planMeal: PlanMeal
@@ -53,44 +54,35 @@ export default function MealConfirmation({ planMeal, foods }: MealConfirmationPr
   }
 
   return (
-    <div className="pt-3 border-t border-gray-100">
+    <div className="pt-3 border-t border-ink-900/10">
       <div className="flex gap-2 mb-2">
-        <button
-          type="button"
+        <Button
+          variant={status === 'as_planned' ? 'primary' : 'secondary'}
+          size="md"
           onClick={() => confirm('as_planned')}
           disabled={loading}
-          className={`flex-1 px-2 py-1 text-xs font-medium rounded ${
-            status === 'as_planned'
-              ? 'bg-green-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
+          className="flex-1 !px-2 !py-1 text-xs"
         >
           As planned
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant={status === 'substituted' ? 'primary' : 'secondary'}
+          size="md"
           onClick={() => setShowSubstitutePicker(true)}
           disabled={loading}
-          className={`flex-1 px-2 py-1 text-xs font-medium rounded ${
-            status === 'substituted'
-              ? 'bg-yellow-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
+          className="flex-1 !px-2 !py-1 text-xs"
         >
           Substituted
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant={status === 'skipped' ? 'primary' : 'secondary'}
+          size="md"
           onClick={() => confirm('skipped')}
           disabled={loading}
-          className={`flex-1 px-2 py-1 text-xs font-medium rounded ${
-            status === 'skipped'
-              ? 'bg-red-600 text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-          }`}
+          className="flex-1 !px-2 !py-1 text-xs"
         >
           Skipped
-        </button>
+        </Button>
       </div>
 
       {showSubstitutePicker && (
@@ -98,7 +90,7 @@ export default function MealConfirmation({ planMeal, foods }: MealConfirmationPr
           <select
             value={substituteFoodId}
             onChange={(e) => setSubstituteFoodId(e.target.value)}
-            className="w-full text-xs px-2 py-1 border border-gray-300 rounded"
+            className="w-full text-xs px-2 py-1.5 border border-ink-900/15 bg-cream-50 text-ink-900"
           >
             <option value="">Select a food...</option>
             {foods.map((food) => (
@@ -115,25 +107,26 @@ export default function MealConfirmation({ planMeal, foods }: MealConfirmationPr
               value={substituteQuantityG}
               onChange={(e) => setSubstituteQuantityG(e.target.value)}
               placeholder="Quantity (g)"
-              className="flex-1 text-xs px-2 py-1 border border-gray-300 rounded"
+              className="flex-1 text-xs px-2 py-1.5 border border-ink-900/15 bg-cream-50 text-ink-900 placeholder:text-ink-900/40"
             />
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="md"
               onClick={handleSubstituteSubmit}
               disabled={loading}
-              className="px-3 py-1 text-xs font-medium rounded bg-indigo-600 text-white hover:bg-indigo-700"
+              className="!px-3 !py-1 text-xs"
             >
               Confirm
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
-      {error && <div className="text-xs text-red-600 mb-2">{error}</div>}
+      {error && <div className="text-xs text-brick-500 mb-2">{error}</div>}
 
       {macroDiff && status === 'substituted' && (
-        <div className="text-xs text-gray-600 bg-yellow-50 rounded p-2">
-          <div className="font-medium mb-1">Macro difference from plan:</div>
+        <div className="tabular text-xs text-ink-900/60 border border-ink-900/15 p-2">
+          <div className="font-medium mb-1 text-ink-900/80">Macro difference from plan:</div>
           <div className="grid grid-cols-4 gap-1">
             <span>{macroDiff.calories >= 0 ? '+' : ''}{macroDiff.calories} cal</span>
             <span>{macroDiff.protein >= 0 ? '+' : ''}{macroDiff.protein}g protein</span>

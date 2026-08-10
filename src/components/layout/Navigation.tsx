@@ -1,12 +1,19 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
+import { GUEST_PLAN_STORAGE_KEY } from '@/contexts/AuthContext'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import Badge from '@/components/ui/Badge'
 
 export default function Navigation() {
   const { user, signOut } = useAuth()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [hasPendingPlan, setHasPendingPlan] = useState(false)
+
+  useEffect(() => {
+    setHasPendingPlan(Boolean(sessionStorage.getItem(GUEST_PLAN_STORAGE_KEY)))
+  }, [])
 
   const handleSignOut = async () => {
     try {
@@ -16,61 +23,45 @@ export default function Navigation() {
     }
   }
 
+  const navLinkClass = 'text-sm text-ink-900/50 hover:text-ink-900 transition-colors'
+
   return (
-    <nav className="bg-white shadow">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="text-xl font-bold text-indigo-600">
-                Nutrition Plan
-              </Link>
-            </div>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              <Link
-                href="/dashboard"
-                className="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-              >
+    <nav className="border-b border-ink-900/15">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="flex justify-between h-16 items-center">
+          <div className="flex items-center gap-10">
+            <Link href="/" className="font-display text-lg text-ink-900">
+              Nutrition Plan
+            </Link>
+            <div className="hidden sm:flex gap-8">
+              <Link href="/dashboard" className={navLinkClass}>
                 Dashboard
               </Link>
-              <Link
-                href="/plans"
-                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-              >
+              <Link href="/plans" className={navLinkClass}>
                 Plans
-              </Link>
-              <Link
-                href="/meals"
-                className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-              >
-                Meals
               </Link>
             </div>
           </div>
-          <div className="hidden sm:ml-6 sm:flex sm:items-center">
+          <div className="hidden sm:flex items-center gap-6">
+            {!user && hasPendingPlan && (
+              <Badge tone="warn">Plan ready — sign up to save</Badge>
+            )}
             {user ? (
-              <div className="ml-3 relative">
-                <div>
-                  <button
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    <span className="sr-only">Open user menu</span>
-                    <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center">
-                      <span className="text-white text-sm font-medium">
-                        {user.email.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  </button>
-                </div>
+              <div className="relative">
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="h-8 w-8 border border-ember-500 text-ember-400 flex items-center justify-center text-sm focus:outline-none"
+                >
+                  {user.email.charAt(0).toUpperCase()}
+                </button>
                 {isMenuOpen && (
-                  <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
-                    <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                  <div className="absolute right-0 mt-2 w-48 border border-ink-900/15 bg-cream-50 py-1">
+                    <div className="px-4 py-2 text-sm text-ink-900/50 border-b border-ink-900/15">
                       {user.email}
                     </div>
                     <button
                       onClick={handleSignOut}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="block w-full text-left px-4 py-2 text-sm text-ink-900/80 hover:text-ink-900"
                     >
                       Sign out
                     </button>
@@ -78,16 +69,13 @@ export default function Navigation() {
                 )}
               </div>
             ) : (
-              <div className="space-x-4">
-                <Link
-                  href="/login"
-                  className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
-                >
+              <div className="flex items-center gap-6">
+                <Link href="/login" className={navLinkClass}>
                   Sign in
                 </Link>
                 <Link
                   href="/signup"
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+                  className="bg-ember-500 hover:bg-ember-400 text-ink-900 px-4 py-2 text-sm font-medium transition-colors"
                 >
                   Sign up
                 </Link>
@@ -97,7 +85,7 @@ export default function Navigation() {
           <div className="-mr-2 flex items-center sm:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+              className="inline-flex items-center justify-center p-2 text-ink-900/70 hover:text-ink-900 focus:outline-none"
             >
               <span className="sr-only">Open main menu</span>
               <svg
@@ -121,36 +109,30 @@ export default function Navigation() {
 
       {/* Mobile menu */}
       {isMenuOpen && (
-        <div className="sm:hidden">
+        <div className="sm:hidden border-t border-ink-900/15">
           <div className="pt-2 pb-3 space-y-1">
             <Link
               href="/dashboard"
-              className="bg-indigo-50 border-indigo-500 text-indigo-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+              className="text-ink-900/70 hover:text-ink-900 block px-4 py-2 text-base"
             >
               Dashboard
             </Link>
             <Link
               href="/plans"
-              className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+              className="text-ink-900/70 hover:text-ink-900 block px-4 py-2 text-base"
             >
               Plans
             </Link>
-            <Link
-              href="/meals"
-              className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
-            >
-              Meals
-            </Link>
           </div>
-          <div className="pt-4 pb-3 border-t border-gray-200">
+          <div className="pt-4 pb-3 border-t border-ink-900/15">
             {user ? (
               <div className="space-y-1">
-                <div className="px-4 py-2 text-base font-medium text-gray-800">
+                <div className="px-4 py-2 text-base text-ink-900/80">
                   {user.email}
                 </div>
                 <button
                   onClick={handleSignOut}
-                  className="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                  className="block w-full text-left px-4 py-2 text-base text-ink-900/60 hover:text-ink-900"
                 >
                   Sign out
                 </button>
@@ -159,13 +141,13 @@ export default function Navigation() {
               <div className="space-y-1">
                 <Link
                   href="/login"
-                  className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                  className="block px-4 py-2 text-base text-ink-900/60 hover:text-ink-900"
                 >
                   Sign in
                 </Link>
                 <Link
                   href="/signup"
-                  className="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                  className="block px-4 py-2 text-base text-ink-900/60 hover:text-ink-900"
                 >
                   Sign up
                 </Link>
@@ -176,4 +158,4 @@ export default function Navigation() {
       )}
     </nav>
   )
-} 
+}

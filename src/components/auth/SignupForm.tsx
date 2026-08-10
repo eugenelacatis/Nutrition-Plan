@@ -1,8 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { GUEST_PLAN_STORAGE_KEY } from '@/contexts/AuthContext'
 import Link from 'next/link'
+import Input from '@/components/ui/Input'
+import Button from '@/components/ui/Button'
+import Badge from '@/components/ui/Badge'
 
 export default function SignupForm() {
   const [email, setEmail] = useState('')
@@ -10,14 +14,17 @@ export default function SignupForm() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [message, setMessage] = useState('')
+  const [hasPendingPlan, setHasPendingPlan] = useState(false)
   const { signUp } = useAuth()
+
+  useEffect(() => {
+    setHasPendingPlan(Boolean(sessionStorage.getItem(GUEST_PLAN_STORAGE_KEY)))
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
-    setMessage('')
 
     if (password !== confirmPassword) {
       setError('Passwords do not match')
@@ -27,102 +34,75 @@ export default function SignupForm() {
 
     try {
       await signUp(email, password)
-      setMessage('Check your email for a confirmation link!')
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred')
-    } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
+    <div className="min-h-screen bg-cream-50">
+      <div className="max-w-6xl mx-auto px-6 py-20 grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-16">
+        <div className="text-sm uppercase tracking-widest text-ink-900/40">
+          Sign up
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">
-                Email address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="confirmPassword" className="sr-only">
-                Confirm Password
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </div>
-          </div>
 
-          {error && (
-            <div className="text-red-600 text-sm text-center">{error}</div>
+        <div className="max-w-sm">
+          <h2 className="font-display text-3xl text-ink-900">Create your account</h2>
+
+          {hasPendingPlan && (
+            <div className="mt-4">
+              <Badge tone="warn">Signing up will save the plan you just built</Badge>
+            </div>
           )}
 
-          {message && (
-            <div className="text-green-600 text-sm text-center">{message}</div>
-          )}
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              label="Email address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              label="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              label="Confirm password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Creating account...' : 'Sign up'}
-            </button>
-          </div>
+            {error && <p className="text-sm text-brick-500">{error}</p>}
 
-          <div className="text-center">
-            <Link
-              href="/login"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
-            >
-              Already have an account? Sign in
-            </Link>
-          </div>
-        </form>
+            <Button type="submit" variant="primary" disabled={loading} size="lg" className="w-full">
+              {loading ? 'Creating account…' : 'Sign up'}
+            </Button>
+
+            <p className="text-sm text-ink-900/50">
+              Already have an account?{' '}
+              <Link href="/login" className="text-ember-400 hover:text-ember-500 underline underline-offset-4">
+                Sign in
+              </Link>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   )
-} 
+}

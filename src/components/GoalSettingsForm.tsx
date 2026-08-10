@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { apiClient } from '@/lib/api'
+import Input from '@/components/ui/Input'
+import Button from '@/components/ui/Button'
 
 export default function GoalSettingsForm() {
   const [goalWeight, setGoalWeight] = useState('')
@@ -35,41 +37,31 @@ export default function GoalSettingsForm() {
   }
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md mb-8">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Goal</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Goal Weight (lbs)</label>
-          <input
-            type="number"
-            step="0.1"
-            value={goalWeight}
-            onChange={(e) => setGoalWeight(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="175"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Direction</label>
-          <select
-            value={goalDirection}
-            onChange={(e) => setGoalDirection(e.target.value as 'lose' | 'gain' | 'maintain')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="lose">Lose weight</option>
-            <option value="gain">Gain weight</option>
-            <option value="maintain">Maintain weight</option>
-          </select>
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <Input
+        type="number"
+        step="0.1"
+        label="Goal weight (lbs)"
+        value={goalWeight}
+        onChange={(e) => setGoalWeight(e.target.value)}
+        placeholder="175"
+      />
+      <div className="flex flex-col gap-1.5">
+        <label className="text-sm text-ink-900/60">Direction</label>
+        <select
+          value={goalDirection}
+          onChange={(e) => setGoalDirection(e.target.value as 'lose' | 'gain' | 'maintain')}
+          className="border-b border-ink-900/25 bg-transparent px-0 py-2 text-ink-900 focus:outline-none focus:border-ember-400"
         >
-          {loading ? 'Saving...' : 'Save Goal'}
-        </button>
-        {saved && <div className="text-sm text-green-600 text-center">Saved!</div>}
-      </form>
-    </div>
+          <option value="lose">Lose weight</option>
+          <option value="gain">Gain weight</option>
+          <option value="maintain">Maintain weight</option>
+        </select>
+      </div>
+      <Button type="submit" variant="primary" disabled={loading} className="w-full">
+        {loading ? 'Saving…' : 'Save goal'}
+      </Button>
+      {saved && <p className="text-sm text-sage-400">Saved</p>}
+    </form>
   )
 }

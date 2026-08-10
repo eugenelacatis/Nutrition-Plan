@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/api'
 import { useRouter } from 'next/navigation'
+import Input from '@/components/ui/Input'
+import Button from '@/components/ui/Button'
+import Badge from '@/components/ui/Badge'
 
 interface CreatePlanFormProps {
   onPlanCreated?: (planId: string) => void
@@ -11,8 +14,9 @@ interface CreatePlanFormProps {
 export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [step, setStep] = useState(1)
-  
+
   const [formData, setFormData] = useState({
     weight: '',
     goal: 'muscle_gain',
@@ -33,14 +37,14 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
   ]
 
   const commonRestrictions = [
-    'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 
+    'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free',
     'Nut-Free', 'Low-Carb', 'Keto', 'Paleo'
   ]
 
   // Calculate calories and macros based on bodyweight, goal, and rate of change
   const calculateNutritionTargets = (weight: number, goal: string, rateOfChange: number) => {
     let baseCaloriesPerLb, proteinPerLb, fatPerLb, calorieAdjustment
-    
+
     switch (goal) {
       case 'muscle_gain':
         baseCaloriesPerLb = 15 // Base maintenance calories
@@ -70,17 +74,17 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
         calorieAdjustment = 0 // No adjustment for maintenance
         break
     }
-    
+
     const totalCalories = Math.round(weight * baseCaloriesPerLb + calorieAdjustment)
     const protein = Math.round(weight * proteinPerLb)
     const fat = Math.round(weight * fatPerLb)
     const carbs = Math.round((totalCalories - (protein * 4) - (fat * 9)) / 4) // Remaining calories as carbs
-    
-    return { 
-      calories: totalCalories, 
-      protein, 
-      carbs, 
-      fat 
+
+    return {
+      calories: totalCalories,
+      protein,
+      carbs,
+      fat
     }
   }
 
@@ -130,45 +134,22 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError('')
 
     try {
       const response = await apiClient.generateMealPlan(
         formData.goal,
         formData.dietaryRestrictions
       )
-      
-      if (response.success) {
-        const mealPlan = response.data
-        
-        // Store the plan in localStorage for demo purposes
-        const existingPlans = JSON.parse(localStorage.getItem('nutrition-plans') || '[]')
-        const updatedPlans = [mealPlan, ...existingPlans]
-        localStorage.setItem('nutrition-plans', JSON.stringify(updatedPlans))
 
-        onPlanCreated?.(mealPlan.id)
-        router.push(`/plans/${mealPlan.id}`)
+      if (response.success) {
+        const plan = response.data
+        onPlanCreated?.(plan.id)
+        router.push(`/plans/${plan.id}`)
       }
     } catch (error) {
       console.error('Error creating plan:', error)
-      // Fallback to demo data if API fails
-      const demoPlan = {
-        id: `demo-${Date.now()}`,
-        name: `${formData.goal.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} Plan`,
-        description: `Demo plan for ${formData.goal.replace('_', ' ')}`,
-        dailyMeals: [],
-        totalCalories: formData.calorieTarget * 7,
-        totalProtein: formData.proteinTarget * 7,
-        totalCarbs: formData.carbTarget * 7,
-        totalFat: formData.fatTarget * 7,
-        created_at: new Date().toISOString()
-      }
-      
-      const existingPlans = JSON.parse(localStorage.getItem('nutrition-plans') || '[]')
-      const updatedPlans = [demoPlan, ...existingPlans]
-      localStorage.setItem('nutrition-plans', JSON.stringify(updatedPlans))
-
-      onPlanCreated?.(demoPlan.id)
-      router.push(`/plans/${demoPlan.id}`)
+      setError('Failed to generate your plan. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -199,74 +180,56 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Create Your Nutrition Plan</h2>
-        <p className="text-gray-600">Let AI generate a personalized meal plan based on your goals</p>
+        <h2 className="font-display text-3xl text-ink-900 mb-2">Create your nutrition plan</h2>
+        <p className="text-ink-900/60">Let AI generate a personalized meal plan based on your goals</p>
       </div>
 
       {/* Progress Steps */}
       <div className="flex items-center justify-center mb-8">
         <div className="flex items-center">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-            step >= 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
-          }`}>
-            1
-          </div>
-          <div className={`w-16 h-1 mx-2 ${step >= 2 ? 'bg-indigo-600' : 'bg-gray-200'}`}></div>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-            step >= 2 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
-          }`}>
-            2
-          </div>
-          <div className={`w-16 h-1 mx-2 ${step >= 3 ? 'bg-indigo-600' : 'bg-gray-200'}`}></div>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-            step >= 3 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
-          }`}>
-            3
-          </div>
-          <div className={`w-16 h-1 mx-2 ${step >= 4 ? 'bg-indigo-600' : 'bg-gray-200'}`}></div>
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-            step >= 4 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-600'
-          }`}>
-            4
-          </div>
+          {[1, 2, 3, 4].map((s, i) => (
+            <div key={s} className="flex items-center">
+              <div className={`w-8 h-8 border flex items-center justify-center text-sm font-medium ${
+                step >= s ? 'border-ember-500 text-ember-400' : 'border-ink-900/20 text-ink-900/40'
+              }`}>
+                {s}
+              </div>
+              {i < 3 && (
+                <div className={`w-16 h-px mx-2 ${step > s ? 'bg-ember-500' : 'bg-ink-900/15'}`}></div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Step 1: Weight Input */}
       {step === 1 && (
         <div className="space-y-6">
-          <h3 className="text-xl font-semibold text-gray-900">What's your current weight?</h3>
+          <h3 className="font-display text-xl text-ink-900">What's your current weight?</h3>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Weight (lbs)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                value={formData.weight}
-                onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="180.5"
-                required
-              />
-            </div>
-            
-            <div className="bg-blue-50 p-4 rounded-md">
-              <p className="text-sm text-blue-800">
-                <strong>Note:</strong> Your nutrition targets will be calculated based on your bodyweight and goal.
-              </p>
-            </div>
+            <Input
+              type="number"
+              step="0.1"
+              label="Weight (lbs)"
+              value={formData.weight}
+              onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
+              placeholder="180.5"
+              required
+            />
+
+            <p className="text-sm text-ink-900/60 border-l border-ink-900/20 pl-4">
+              Your nutrition targets will be calculated based on your bodyweight and goal.
+            </p>
           </div>
-          
+
           <div className="flex justify-end">
-            <button
+            <Button
               onClick={() => setStep(2)}
               disabled={!formData.weight}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="primary"
             >
               Next →
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -274,36 +237,30 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
       {/* Step 2: Goal Selection */}
       {step === 2 && (
         <div className="space-y-6">
-          <h3 className="text-xl font-semibold text-gray-900">What's your primary goal?</h3>
+          <h3 className="font-display text-xl text-ink-900">What's your primary goal?</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {goals.map((goal) => (
               <button
                 key={goal.value}
                 onClick={() => setFormData(prev => ({ ...prev, goal: goal.value }))}
-                className={`p-6 border-2 rounded-lg transition-colors text-left ${
+                className={`p-6 border text-left transition-colors ${
                   formData.goal === goal.value
-                    ? 'border-indigo-500 bg-indigo-50'
-                    : 'border-gray-200 hover:border-indigo-500 hover:bg-indigo-50'
+                    ? 'border-ember-500 text-ember-400'
+                    : 'border-ink-900/15 text-ink-900 hover:border-ink-900/40'
                 }`}
               >
-                <h4 className="font-semibold text-gray-900">{goal.label}</h4>
+                <h4 className="font-display">{goal.label}</h4>
               </button>
             ))}
           </div>
-          
+
           <div className="flex justify-between">
-            <button
-              onClick={() => setStep(1)}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
-            >
+            <Button variant="ghost" onClick={() => setStep(1)}>
               ← Back
-            </button>
-            <button
-              onClick={() => setStep(3)}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-            >
+            </Button>
+            <Button variant="primary" onClick={() => setStep(3)}>
               Next →
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -311,8 +268,8 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
       {/* Step 3: Dietary Restrictions */}
       {step === 3 && (
         <div className="space-y-6">
-          <h3 className="text-xl font-semibold text-gray-900">Any dietary restrictions?</h3>
-          
+          <h3 className="font-display text-xl text-ink-900">Any dietary restrictions?</h3>
+
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2">
               {commonRestrictions.map((restriction) => (
@@ -328,48 +285,36 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
                       }))
                     }
                   }}
-                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                    formData.dietaryRestrictions.includes(restriction)
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
                 >
-                  {restriction}
+                  <Badge tone={formData.dietaryRestrictions.includes(restriction) ? 'warn' : 'neutral'}>
+                    {restriction}
+                  </Badge>
                 </button>
               ))}
             </div>
 
             <div className="flex gap-2">
-              <input
+              <Input
                 type="text"
                 value={restrictionInput}
                 onChange={(e) => setRestrictionInput(e.target.value)}
                 placeholder="Add custom restriction..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                onKeyPress={(e) => e.key === 'Enter' && addRestriction()}
+                className="flex-1"
+                onKeyDown={(e) => e.key === 'Enter' && addRestriction()}
               />
-              <button
-                onClick={addRestriction}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-              >
+              <Button variant="secondary" onClick={addRestriction}>
                 Add
-              </button>
+              </Button>
             </div>
           </div>
 
           <div className="flex justify-between">
-            <button
-              onClick={() => setStep(2)}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
-            >
+            <Button variant="ghost" onClick={() => setStep(2)}>
               ← Back
-            </button>
-            <button
-              onClick={() => setStep(4)}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-            >
+            </Button>
+            <Button variant="primary" onClick={() => setStep(4)}>
               Next →
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -377,134 +322,97 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
       {/* Step 4: Nutrition Targets */}
       {step === 4 && (
         <form onSubmit={handleSubmit} className="space-y-6">
-          <h3 className="text-xl font-semibold text-gray-900">Your calculated nutrition targets</h3>
-          
-          <div className="bg-green-50 p-4 rounded-md mb-6">
-            <p className="text-sm text-green-800">
-              <strong>Calculated for {formData.weight}lbs:</strong> These targets are based on your bodyweight and {formData.goal.replace('_', ' ')} goal.
-            </p>
-          </div>
+          <h3 className="font-display text-xl text-ink-900">Your calculated nutrition targets</h3>
+
+          <p className="text-sm text-ink-900/60 border-l border-sage-400/40 pl-4">
+            <strong className="text-ink-900">Calculated for {formData.weight}lbs:</strong> These targets are based on your bodyweight and {formData.goal.replace('_', ' ')} goal.
+          </p>
 
           {/* Rate of Change Slider */}
           {(formData.goal === 'muscle_gain' || formData.goal === 'weight_loss') && (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rate of Change
-                </label>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-gray-600">
-                    {formData.goal === 'muscle_gain' ? '0.25%' : '0.5%'}
-                  </span>
-                  <span className="text-sm font-medium text-gray-900">
-                    {getRateOfChangeLabel()}
-                  </span>
-                  <span className="text-sm text-gray-600">
-                    {formData.goal === 'muscle_gain' ? '0.5%' : '1.0%'}
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min={formData.goal === 'muscle_gain' ? 0.25 : 0.5}
-                  max={formData.goal === 'muscle_gain' ? 0.5 : 1.0}
-                  step={0.025}
-                  value={formData.rateOfChange}
-                  onChange={(e) => setFormData(prev => ({ ...prev, rateOfChange: parseFloat(e.target.value) }))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                />
-                <p className="text-sm text-gray-600 mt-1">
-                  {getRateOfChangeDescription()}
-                </p>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-ink-900/80">Rate of change</label>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-ink-900/50">
+                  {formData.goal === 'muscle_gain' ? '0.25%' : '0.5%'}
+                </span>
+                <span className="text-sm font-medium text-ink-900">
+                  {getRateOfChangeLabel()}
+                </span>
+                <span className="text-sm text-ink-900/50">
+                  {formData.goal === 'muscle_gain' ? '0.5%' : '1.0%'}
+                </span>
               </div>
+              <input
+                type="range"
+                min={formData.goal === 'muscle_gain' ? 0.25 : 0.5}
+                max={formData.goal === 'muscle_gain' ? 0.5 : 1.0}
+                step={0.025}
+                value={formData.rateOfChange}
+                onChange={(e) => setFormData(prev => ({ ...prev, rateOfChange: parseFloat(e.target.value) }))}
+                className="w-full h-2 bg-cream-100 rounded-lg appearance-none cursor-pointer accent-ember-500"
+              />
+              <p className="text-sm text-ink-900/50">
+                {getRateOfChangeDescription()}
+              </p>
             </div>
           )}
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Daily Calories
-              </label>
-              <input
-                type="number"
-                value={formData.calorieTarget}
-                onChange={(e) => setFormData(prev => ({ ...prev, calorieTarget: parseInt(e.target.value) }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                min="1000"
-                max="10000"
-                step="25"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Protein (g/day)
-              </label>
-              <input
-                type="number"
-                value={formData.proteinTarget}
-                onChange={(e) => setFormData(prev => ({ ...prev, proteinTarget: parseInt(e.target.value) }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                min="50"
-                max="1000"
-                step="1"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Carbs (g/day)
-              </label>
-              <input
-                type="number"
-                value={formData.carbTarget}
-                onChange={(e) => setFormData(prev => ({ ...prev, carbTarget: parseInt(e.target.value) }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                min="50"
-                max="1500"
-                step="1"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Fat (g/day)
-              </label>
-              <input
-                type="number"
-                value={formData.fatTarget}
-                onChange={(e) => setFormData(prev => ({ ...prev, fatTarget: parseInt(e.target.value) }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                min="30"
-                max="500"
-                step="1"
-              />
-            </div>
+            <Input
+              type="number"
+              label="Daily calories"
+              value={formData.calorieTarget}
+              onChange={(e) => setFormData(prev => ({ ...prev, calorieTarget: parseInt(e.target.value) }))}
+              min="1000"
+              max="10000"
+              step="25"
+            />
+            <Input
+              type="number"
+              label="Protein (g/day)"
+              value={formData.proteinTarget}
+              onChange={(e) => setFormData(prev => ({ ...prev, proteinTarget: parseInt(e.target.value) }))}
+              min="50"
+              max="1000"
+              step="1"
+            />
+            <Input
+              type="number"
+              label="Carbs (g/day)"
+              value={formData.carbTarget}
+              onChange={(e) => setFormData(prev => ({ ...prev, carbTarget: parseInt(e.target.value) }))}
+              min="50"
+              max="1500"
+              step="1"
+            />
+            <Input
+              type="number"
+              label="Fat (g/day)"
+              value={formData.fatTarget}
+              onChange={(e) => setFormData(prev => ({ ...prev, fatTarget: parseInt(e.target.value) }))}
+              min="30"
+              max="500"
+              step="1"
+            />
           </div>
 
-          <div className="bg-blue-50 p-4 rounded-md">
-            <p className="text-sm text-blue-800">
-              <strong>Note:</strong> The calories and macros provided are a baseline for your weight. Depending on your weekly trends, they will be adjusted accordingly for you.
-            </p>
-          </div>
+          <p className="text-sm text-ink-900/60 border-l border-ink-900/20 pl-4">
+            The calories and macros provided are a baseline for your weight. Depending on your weekly trends, they will be adjusted accordingly for you.
+          </p>
+
+          {error && <p className="text-sm text-brick-500">{error}</p>}
 
           <div className="flex justify-between">
-            <button
-              type="button"
-              onClick={() => setStep(3)}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
-            >
+            <Button type="button" variant="ghost" onClick={() => setStep(3)}>
               ← Back
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Generating Plan...' : 'Generate Plan'}
-            </button>
+            </Button>
+            <Button type="submit" variant="primary" disabled={loading}>
+              {loading ? 'Generating plan…' : 'Generate plan'}
+            </Button>
           </div>
         </form>
       )}
     </div>
   )
-} 
+}

@@ -4,9 +4,11 @@ import { useState } from 'react'
 import DailyLogForm from '@/components/DailyLogForm'
 import OptimalScoreDashboard from '@/components/ScoreDashboard'
 import GoalSettingsForm from '@/components/GoalSettingsForm'
+import Button from '@/components/ui/Button'
 
 export default function DashboardPage() {
   const [showLogForm, setShowLogForm] = useState(false)
+  const [showGoalSettings, setShowGoalSettings] = useState(false)
   const [refreshDashboard, setRefreshDashboard] = useState(0)
 
   const handleLogSubmitted = () => {
@@ -15,36 +17,52 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto py-8">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Dashboard</h1>
-          <p className="text-gray-600">Track your daily metrics and see your optimal score</p>
+    <div className="min-h-screen bg-cream-50 py-16">
+      <div className="max-w-6xl mx-auto px-6">
+        <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-x-16 mb-10">
+          <div className="text-sm uppercase tracking-widest text-ink-900/40">
+            Dashboard
+          </div>
+          <div className="flex items-start justify-between">
+            <h1 className="font-display text-4xl text-ink-900">Your score</h1>
+            <div className="flex gap-3">
+              <Button variant="secondary" onClick={() => setShowLogForm(!showLogForm)}>
+                {showLogForm ? 'Cancel' : 'Log daily metrics'}
+              </Button>
+              <Button variant="secondary" onClick={() => setShowGoalSettings(!showGoalSettings)}>
+                {showGoalSettings ? 'Hide goal' : 'Edit goal'}
+              </Button>
+            </div>
+          </div>
         </div>
 
-        {/* Action Button */}
-        <div className="text-center mb-8">
-          <button
-            onClick={() => setShowLogForm(!showLogForm)}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            {showLogForm ? 'Cancel' : 'Log Daily Metrics'}
-          </button>
+        <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-x-16">
+          <div />
+          <OptimalScoreDashboard key={refreshDashboard} />
         </div>
 
-        {/* Daily Log Form */}
         {showLogForm && (
-          <div className="mb-8">
-            <DailyLogForm onLogSubmitted={handleLogSubmitted} />
+          <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-x-16 border-t border-ink-900/15 mt-10 pt-8">
+            <div className="text-sm uppercase tracking-widest text-ink-900/40">
+              Log
+            </div>
+            <div className="max-w-sm">
+              <DailyLogForm onLogSubmitted={handleLogSubmitted} />
+            </div>
           </div>
         )}
 
-        <GoalSettingsForm />
-
-        {/* Optimal Score Dashboard */}
-        <OptimalScoreDashboard key={refreshDashboard} />
+        {showGoalSettings && (
+          <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-x-16 border-t border-ink-900/15 mt-10 pt-8">
+            <div className="text-sm uppercase tracking-widest text-ink-900/40">
+              Goal
+            </div>
+            <div className="max-w-sm">
+              <GoalSettingsForm />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
-} 
+}
