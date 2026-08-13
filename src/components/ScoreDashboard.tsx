@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { apiClient, type OptimalScore } from '@/lib/api'
+import { scoreTextClass } from '@/lib/scoreTier'
 import Button from '@/components/ui/Button'
 import MacroRing from '@/components/ui/MacroRing'
 
@@ -32,12 +33,6 @@ export default function OptimalScoreDashboard({ onRefresh }: OptimalScoreDashboa
   useEffect(() => {
     fetchOptimalScore()
   }, [])
-
-  const getScoreTextClass = (score: number) => {
-    if (score >= 80) return 'text-sage-400'
-    if (score >= 60) return 'text-gold-400'
-    return 'text-brick-500'
-  }
 
   if (loading) {
     return <p className="text-ink-900/60">Loading score…</p>
@@ -87,7 +82,7 @@ export default function OptimalScoreDashboard({ onRefresh }: OptimalScoreDashboa
         <div>
           <h4 className="text-sm text-ink-900/50 mb-2">Sleep quality</h4>
           <div className="flex items-baseline justify-between">
-            <span className={`tabular text-2xl font-semibold ${getScoreTextClass(factors.sleep.score)}`}>
+            <span className={`tabular text-2xl font-semibold ${scoreTextClass(factors.sleep.score)}`}>
               {factors.sleep.score}
             </span>
             <span className="text-sm text-ink-900/40">
@@ -99,7 +94,7 @@ export default function OptimalScoreDashboard({ onRefresh }: OptimalScoreDashboa
         <div>
           <h4 className="text-sm text-ink-900/50 mb-2">Digestion</h4>
           <div className="flex items-baseline justify-between">
-            <span className={`tabular text-2xl font-semibold ${getScoreTextClass(factors.digestion.score)}`}>
+            <span className={`tabular text-2xl font-semibold ${scoreTextClass(factors.digestion.score)}`}>
               {factors.digestion.score}
             </span>
             <span className="text-sm text-ink-900/40">
@@ -111,7 +106,7 @@ export default function OptimalScoreDashboard({ onRefresh }: OptimalScoreDashboa
         <div>
           <h4 className="text-sm text-ink-900/50 mb-2">Weight consistency</h4>
           <div className="flex items-baseline justify-between">
-            <span className={`tabular text-2xl font-semibold ${getScoreTextClass(factors.weight.score)}`}>
+            <span className={`tabular text-2xl font-semibold ${scoreTextClass(factors.weight.score)}`}>
               {factors.weight.score}
             </span>
             <span className="text-sm text-ink-900/40">
