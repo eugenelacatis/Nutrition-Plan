@@ -13,6 +13,16 @@ model User {
   passwordHash  String
   goalWeight    Float?
   goalDirection String?
+  wakeTime      String?
+  workoutTime   String?
+  workStart     String?
+  workEnd       String?
+  sleepTime     String?
+  weightUnit    String?    @default("lbs")
+  notes         String?
+  mealCountPref String?
+  cookTimePref  String?
+  proteinPref   String?
   createdAt     DateTime   @default(now())
   dailyLogs     DailyLog[]
   plans         Plan[]
@@ -51,20 +61,23 @@ model Plan {
 }
 
 model PlanMeal {
-  id           String    @id @default(cuid())
-  planId       String
-  plan         Plan      @relation(fields: [planId], references: [id])
-  day          String
-  name         String
-  calories     Int
-  protein      Int
-  carbs        Int
-  fat          Int
-  ingredients  String
-  instructions String
-  prepTime     Int
-  cookTime     Int
-  mealLogs     MealLog[]
+  id            String    @id @default(cuid())
+  planId        String
+  plan          Plan      @relation(fields: [planId], references: [id])
+  day           String
+  name          String
+  slot          String    @default("snack")
+  scheduledTime String?
+  sortOrder     Int       @default(0)
+  calories      Int
+  protein       Int
+  carbs         Int
+  fat           Int
+  ingredients   String
+  instructions  String
+  prepTime      Int
+  cookTime      Int
+  mealLogs      MealLog[]
 
   @@index([planId])
 }

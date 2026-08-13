@@ -14,9 +14,12 @@ export async function persistPlan(userId: string, mealPlan: MealPlan) {
       aiGenerated: mealPlan.aiGenerated,
       meals: {
         create: mealPlan.dailyMeals.flatMap((dailyMeal) =>
-          dailyMeal.meals.map((meal) => ({
+          dailyMeal.meals.map((meal, index) => ({
             day: dailyMeal.day,
             name: meal.name,
+            slot: meal.slot,
+            scheduledTime: meal.scheduledTime,
+            sortOrder: index,
             calories: meal.calories,
             protein: meal.protein,
             carbs: meal.carbs,

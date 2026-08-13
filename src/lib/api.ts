@@ -15,6 +15,9 @@ export interface PlanMeal {
   id: string;
   day: string;
   name: string;
+  slot: 'breakfast' | 'pre_workout' | 'post_workout' | 'lunch' | 'dinner' | 'snack';
+  scheduledTime: string | null;
+  sortOrder: number;
   calories: number;
   protein: number;
   carbs: number;
@@ -104,6 +107,22 @@ export interface DailyLog {
 export interface UserGoal {
   goalWeight: number | null;
   goalDirection: 'lose' | 'gain' | 'maintain' | null;
+  weightUnit: 'lbs' | 'kg' | null;
+}
+
+export interface UserSchedule {
+  wakeTime: string | null;
+  workoutTime: string | null;
+  workStart: string | null;
+  workEnd: string | null;
+  sleepTime: string | null;
+}
+
+export interface UserPersonalization {
+  notes: string | null;
+  mealCountPref: string | null;
+  cookTimePref: string | null;
+  proteinPref: string | null;
 }
 
 export interface OptimalScore {
@@ -160,13 +179,17 @@ class ApiClient {
 
   async generateMealPlan(
     goals: string,
-    restrictions: string[] = []
+    restrictions: string[] = [],
+    hasWorkout: boolean = true,
+    macroTargets?: { calories: number; protein: number; carbs: number; fat: number }
   ): Promise<{ success: boolean; data: Plan }> {
     const response = await this.request<{ success: boolean; data: any }>('/nutrition/generate-plan', {
       method: 'POST',
       body: JSON.stringify({
         goals,
         restrictions,
+        hasWorkout,
+        macroTargets,
       }),
     });
     return { ...response, data: this.parsePlan(response.data) };
@@ -199,6 +222,16 @@ class ApiClient {
 
   async getFoods(): Promise<{ success: boolean; data: Food[] }> {
     return this.request('/nutrition/foods');
+  }
+
+  async updatePlanMeal(
+    id: string,
+    updates: { scheduledTime?: string | null; sortOrder?: number }
+  ): Promise<{ success: boolean; data: PlanMeal }> {
+    return this.request(`/nutrition/plan-meal/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
   }
 
   async logMeal(
@@ -253,6 +286,43 @@ class ApiClient {
     return this.request('/user/goal', {
       method: 'PATCH',
       body: JSON.stringify({ goalWeight, goalDirection }),
+    });
+  }
+
+  async setWeightUnit(weightUnit: 'lbs' | 'kg'): Promise<{ success: boolean; data: UserGoal }> {
+    return this.request('/user/goal', {
+      method: 'PATCH',
+      body: JSON.stringify({ weightUnit }),
+    });
+  }
+
+  async getSchedule(): Promise<{ success: boolean; data: UserSchedule }> {
+    return this.request('/user/schedule');
+  }
+
+  async setSchedule(
+    wakeTime: string | null,
+    workoutTime: string | null,
+    workStart: string | null,
+    workEnd: string | null,
+    sleepTime: string | null
+  ): Promise<{ success: boolean; data: UserSchedule }> {
+    return this.request('/user/schedule', {
+      method: 'PATCH',
+      body: JSON.stringify({ wakeTime, workoutTime, workStart, workEnd, sleepTime }),
+    });
+  }
+
+  async getPersonalization(): Promise<{ success: boolean; data: UserPersonalization }> {
+    return this.request('/user/personalization');
+  }
+
+  async setPersonalization(
+    updates: Partial<UserPersonalization>
+  ): Promise<{ success: boolean; data: UserPersonalization }> {
+    return this.request('/user/personalization', {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
     });
   }
 }

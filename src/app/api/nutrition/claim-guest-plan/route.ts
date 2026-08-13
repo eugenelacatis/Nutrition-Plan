@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
+import { prisma } from '@/lib/prisma'
 import { persistPlan } from '@/lib/nutrition/persistPlan'
+import { computeMealTimes } from '@/lib/nutrition/mealTiming'
 import type { MealPlan, Meal } from '@/lib/nutrition/nutritionAI'
 
 const VALID_GOALS = ['weight_loss', 'muscle_gain', 'maintenance']
+const VALID_SLOTS = ['breakfast', 'pre_workout', 'post_workout', 'lunch', 'dinner', 'snack']
 const MAX_REASONABLE_VALUE = 20000
 const MAX_DAYS = 14
 const MAX_MEALS_PER_DAY = 20
@@ -22,6 +25,8 @@ function isValidMeal(meal: any): meal is Meal {
   return (
     typeof meal?.name === 'string' &&
     meal.name.length <= MAX_STRING_LENGTH &&
+    VALID_SLOTS.includes(meal?.slot) &&
+    (meal?.scheduledTime === null || meal?.scheduledTime === undefined || typeof meal?.scheduledTime === 'string') &&
     Number.isFinite(meal?.calories) &&
     meal.calories >= 0 &&
     meal.calories <= MAX_REASONABLE_VALUE &&
@@ -81,8 +86,24 @@ export async function POST(request: Request) {
   }
 
   try {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { wakeTime: true, workoutTime: true, sleepTime: true },
+    })
+
+    const dailyMeals = user?.workoutTime
+      ? plan.dailyMeals.map((dailyMeal: MealPlan['dailyMeals'][number]) => {
+          const scheduledTimes = computeMealTimes(dailyMeal.meals, user)
+          return {
+            ...dailyMeal,
+            meals: dailyMeal.meals.map((meal, i) => ({ ...meal, scheduledTime: scheduledTimes[i] })),
+          }
+        })
+      : plan.dailyMeals
+
     const savedPlan = await persistPlan(session.user.id, {
       ...plan,
+      dailyMeals,
       aiGenerated: Boolean(plan.aiGenerated),
     })
 

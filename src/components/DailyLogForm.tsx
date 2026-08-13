@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { apiClient } from '@/lib/api'
 import Input from '@/components/ui/Input'
+import WeightInput from '@/components/ui/WeightInput'
 import Button from '@/components/ui/Button'
 
 interface DailyLogFormProps {
@@ -55,12 +56,10 @@ export default function DailyLogForm({ onLogSubmitted }: DailyLogFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && <p className="text-sm text-brick-500">{error}</p>}
 
-      <Input
-        type="number"
-        step="0.1"
-        label="Weight (lbs)"
-        value={formData.weight}
-        onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
+      <WeightInput
+        label="Weight"
+        valueLbs={formData.weight}
+        onChangeLbs={(weight) => setFormData(prev => ({ ...prev, weight }))}
         placeholder="180.5"
         required
       />

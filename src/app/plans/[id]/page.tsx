@@ -8,6 +8,8 @@ import Link from 'next/link'
 import MealConfirmation from '@/components/plans/MealConfirmation'
 import Card from '@/components/ui/Card'
 import MacroRing from '@/components/ui/MacroRing'
+import Badge from '@/components/ui/Badge'
+import { formatTime, SLOT_LABELS } from '@/lib/nutrition/mealTiming'
 
 export default function PlanDetailPage() {
   const { user } = useAuth()
@@ -16,6 +18,7 @@ export default function PlanDetailPage() {
   const [plan, setPlan] = useState<Plan | null>(null)
   const [foods, setFoods] = useState<Food[]>([])
   const [loading, setLoading] = useState(true)
+  const [editingMealId, setEditingMealId] = useState<string | null>(null)
 
   useEffect(() => {
     if (user && params.id) {
@@ -49,6 +52,22 @@ export default function PlanDetailPage() {
       }
     } catch (error) {
       console.error('Error fetching foods:', error)
+    }
+  }
+
+  const handleTimeChange = async (mealId: string, scheduledTime: string) => {
+    setEditingMealId(null)
+    try {
+      const response = await apiClient.updatePlanMeal(mealId, { scheduledTime })
+      if (response.success) {
+        setPlan((prev) =>
+          prev
+            ? { ...prev, meals: prev.meals.map((m) => (m.id === mealId ? { ...m, scheduledTime } : m)) }
+            : prev
+        )
+      }
+    } catch (error) {
+      console.error('Error updating meal time:', error)
     }
   }
 
@@ -128,12 +147,34 @@ export default function PlanDetailPage() {
           <div className="text-sm uppercase tracking-widest text-ink-900/40">
             Meals
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-ink-900/15 pt-8">
-            {plan.meals.map((meal) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 border-t border-ink-900/15 pt-8">
+            {[...plan.meals]
+              .sort((a, b) => a.sortOrder - b.sortOrder)
+              .map((meal) => (
               <Card key={meal.id}>
                 <h4 className="font-display text-lg text-ink-900 mb-2">{meal.name}</h4>
 
-                <div className="tabular flex gap-3 text-sm text-ink-900/60 mb-3">
+                <div className="tabular flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-900/60 mb-3">
+                  {editingMealId === meal.id ? (
+                    <input
+                      type="time"
+                      autoFocus
+                      defaultValue={meal.scheduledTime ?? ''}
+                      onBlur={(e) => (e.target.value ? handleTimeChange(meal.id, e.target.value) : setEditingMealId(null))}
+                      className="border-b border-ink-900/25 bg-transparent text-ink-900 focus:outline-none focus:border-ember-400"
+                    />
+                  ) : (
+                    meal.scheduledTime && (
+                      <button
+                        type="button"
+                        onClick={() => setEditingMealId(meal.id)}
+                        className="font-medium text-ink-900 hover:text-ember-400"
+                      >
+                        {formatTime(meal.scheduledTime)}
+                      </button>
+                    )
+                  )}
+                  <Badge tone="neutral">{SLOT_LABELS[meal.slot]}</Badge>
                   <span>{meal.calories} cal</span>
                   <span>{meal.protein}g protein</span>
                   <span>{meal.carbs}g carbs</span>

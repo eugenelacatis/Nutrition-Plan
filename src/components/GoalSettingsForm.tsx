@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { apiClient } from '@/lib/api'
-import Input from '@/components/ui/Input'
+import WeightInput from '@/components/ui/WeightInput'
 import Button from '@/components/ui/Button'
 
 export default function GoalSettingsForm() {
@@ -38,12 +38,10 @@ export default function GoalSettingsForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Input
-        type="number"
-        step="0.1"
-        label="Goal weight (lbs)"
-        value={goalWeight}
-        onChange={(e) => setGoalWeight(e.target.value)}
+      <WeightInput
+        label="Goal weight"
+        valueLbs={goalWeight}
+        onChangeLbs={setGoalWeight}
         placeholder="175"
       />
       <div className="flex flex-col gap-1.5">

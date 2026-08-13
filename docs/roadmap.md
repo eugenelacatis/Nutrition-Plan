@@ -137,7 +137,7 @@ Build a practical, AI-assisted meal planning and tracking tool tailored for body
 - [x] Simple dashboard with recommendations
 
 ### Phase 2: Enhanced Tracking
-- [ ] Schedule integration and meal timing
+- [x] Schedule integration and meal timing
 - [ ] Advanced substitution database
 - [ ] Pattern recognition for digestion issues
 - [ ] Sleep pattern analysis

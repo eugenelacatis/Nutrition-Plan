@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { apiClient } from '@/lib/api'
 import { useRouter } from 'next/navigation'
 import Input from '@/components/ui/Input'
+import WeightInput from '@/components/ui/WeightInput'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 
@@ -25,7 +26,8 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
     proteinTarget: 0,
     carbTarget: 0,
     fatTarget: 0,
-    rateOfChange: 0.375 // Default to middle of muscle gain range
+    rateOfChange: 0.375, // Default to middle of muscle gain range
+    wantsPeriWorkoutMeals: true
   })
 
   const [restrictionInput, setRestrictionInput] = useState('')
@@ -58,7 +60,7 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
         break
       case 'weight_loss':
         baseCaloriesPerLb = 15 // Base maintenance calories
-        proteinPerLb = 1.5 // 1.5g protein per lb (higher for muscle preservation)
+        proteinPerLb = 1.0 // 1g protein per lb, leaving more of the deficit for carbs
         fatPerLb = 0.3 // 0.3g fat per lb (minimum for hormone production)
         // Adjust calories based on rate of change (0.5% - 1.0% BW/week)
         // 0.5% BW = 1lb/week = 3500 calories/week = 500 calories/day deficit
@@ -139,7 +141,14 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
     try {
       const response = await apiClient.generateMealPlan(
         formData.goal,
-        formData.dietaryRestrictions
+        formData.dietaryRestrictions,
+        formData.wantsPeriWorkoutMeals,
+        {
+          calories: formData.calorieTarget,
+          protein: formData.proteinTarget,
+          carbs: formData.carbTarget,
+          fat: formData.fatTarget,
+        }
       )
 
       if (response.success) {
@@ -207,12 +216,10 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
         <div className="space-y-6">
           <h3 className="font-display text-xl text-ink-900">What's your current weight?</h3>
           <div className="space-y-4">
-            <Input
-              type="number"
-              step="0.1"
-              label="Weight (lbs)"
-              value={formData.weight}
-              onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
+            <WeightInput
+              label="Weight"
+              valueLbs={formData.weight}
+              onChangeLbs={(weight) => setFormData(prev => ({ ...prev, weight }))}
               placeholder="180.5"
               required
             />
@@ -350,7 +357,7 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
                 step={0.025}
                 value={formData.rateOfChange}
                 onChange={(e) => setFormData(prev => ({ ...prev, rateOfChange: parseFloat(e.target.value) }))}
-                className="w-full h-2 bg-cream-100 rounded-lg appearance-none cursor-pointer accent-ember-500"
+                className="w-full h-2 bg-cream-100 rounded-lg cursor-pointer accent-ember-500"
               />
               <p className="text-sm text-ink-900/50">
                 {getRateOfChangeDescription()}
@@ -358,12 +365,15 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[176px]">
             <Input
               type="number"
               label="Daily calories"
               value={formData.calorieTarget}
-              onChange={(e) => setFormData(prev => ({ ...prev, calorieTarget: parseInt(e.target.value) }))}
+              onChange={(e) => {
+                const parsed = parseInt(e.target.value)
+                setFormData(prev => ({ ...prev, calorieTarget: isNaN(parsed) ? prev.calorieTarget : parsed }))
+              }}
               min="1000"
               max="10000"
               step="25"
@@ -372,7 +382,10 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
               type="number"
               label="Protein (g/day)"
               value={formData.proteinTarget}
-              onChange={(e) => setFormData(prev => ({ ...prev, proteinTarget: parseInt(e.target.value) }))}
+              onChange={(e) => {
+                const parsed = parseInt(e.target.value)
+                setFormData(prev => ({ ...prev, proteinTarget: isNaN(parsed) ? prev.proteinTarget : parsed }))
+              }}
               min="50"
               max="1000"
               step="1"
@@ -381,7 +394,10 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
               type="number"
               label="Carbs (g/day)"
               value={formData.carbTarget}
-              onChange={(e) => setFormData(prev => ({ ...prev, carbTarget: parseInt(e.target.value) }))}
+              onChange={(e) => {
+                const parsed = parseInt(e.target.value)
+                setFormData(prev => ({ ...prev, carbTarget: isNaN(parsed) ? prev.carbTarget : parsed }))
+              }}
               min="50"
               max="1500"
               step="1"
@@ -390,7 +406,10 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
               type="number"
               label="Fat (g/day)"
               value={formData.fatTarget}
-              onChange={(e) => setFormData(prev => ({ ...prev, fatTarget: parseInt(e.target.value) }))}
+              onChange={(e) => {
+                const parsed = parseInt(e.target.value)
+                setFormData(prev => ({ ...prev, fatTarget: isNaN(parsed) ? prev.fatTarget : parsed }))
+              }}
               min="30"
               max="500"
               step="1"
@@ -399,6 +418,19 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
 
           <p className="text-sm text-ink-900/60 border-l border-ink-900/20 pl-4">
             The calories and macros provided are a baseline for your weight. Depending on your weekly trends, they will be adjusted accordingly for you.
+          </p>
+
+          <label className="flex items-center gap-2 text-sm text-ink-900/80">
+            <input
+              type="checkbox"
+              checked={formData.wantsPeriWorkoutMeals}
+              onChange={(e) => setFormData(prev => ({ ...prev, wantsPeriWorkoutMeals: e.target.checked }))}
+              className="accent-ember-500"
+            />
+            Include pre- and post-workout meals in this plan
+          </label>
+          <p className="text-sm text-ink-900/50">
+            Plans are generated one day at a time for now, so uncheck this if today is a rest day.
           </p>
 
           {error && <p className="text-sm text-brick-500">{error}</p>}
