@@ -34,6 +34,9 @@ export default function DashboardPage() {
               <Link href="/dashboard/calendar">
                 <Button variant="secondary">View calendar</Button>
               </Link>
+              <Link href="/dashboard/trends">
+                <Button variant="secondary">View trends</Button>
+              </Link>
               <Button variant="secondary" onClick={() => setShowLogForm(!showLogForm)}>
                 {showLogForm ? 'Cancel' : 'Log daily metrics'}
               </Button>
