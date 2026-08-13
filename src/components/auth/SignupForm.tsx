@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { GUEST_PLAN_STORAGE_KEY } from '@/contexts/AuthContext'
 import Link from 'next/link'
@@ -9,6 +10,7 @@ import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 
 export default function SignupForm() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -34,6 +36,7 @@ export default function SignupForm() {
 
     try {
       await signUp(email, password)
+      router.push('/dashboard')
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred')
       setLoading(false)

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { GUEST_PLAN_STORAGE_KEY } from '@/contexts/AuthContext'
 import Input from '@/components/ui/Input'
@@ -8,6 +9,7 @@ import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 
 export default function LoginForm() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -26,9 +28,9 @@ export default function LoginForm() {
 
     try {
       await signIn(email, password)
+      router.push('/dashboard')
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred')
-    } finally {
       setLoading(false)
     }
   }
