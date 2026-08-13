@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { weight, sleepHours, wakeTime, digestionRating, date } = await request.json()
+  const { weight, sleepHours, wakeTime, digestionRating, date: bodyDate } = await request.json()
 
   if (!weight || !sleepHours || !wakeTime || !digestionRating) {
     return NextResponse.json(
@@ -27,14 +27,23 @@ export async function POST(request: Request) {
     )
   }
 
-  const dailyLog = await prisma.dailyLog.create({
-    data: {
+  const date = bodyDate || new Date().toISOString().split('T')[0]
+
+  const dailyLog = await prisma.dailyLog.upsert({
+    where: { userId_date: { userId: session.user.id, date } },
+    create: {
       userId: session.user.id,
       weight: parseFloat(weight),
       sleepHours: parseFloat(sleepHours),
       wakeTime,
       digestionRating: parseInt(digestionRating),
-      date: date || new Date().toISOString().split('T')[0],
+      date,
+    },
+    update: {
+      weight: parseFloat(weight),
+      sleepHours: parseFloat(sleepHours),
+      wakeTime,
+      digestionRating: parseInt(digestionRating),
     },
   })
 

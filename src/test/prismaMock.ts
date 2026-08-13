@@ -5,10 +5,10 @@ import { vi } from 'vitest'
 // rather than stubbing return values that are never checked.
 export const prismaMock = {
   user: { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
-  dailyLog: { findMany: vi.fn(), create: vi.fn() },
+  dailyLog: { findMany: vi.fn(), create: vi.fn(), upsert: vi.fn() },
   planMeal: { findUnique: vi.fn(), update: vi.fn() },
   food: { findUnique: vi.fn() },
-  mealLog: { create: vi.fn() },
+  mealLog: { create: vi.fn(), findMany: vi.fn() },
   trialPlanPool: { findUnique: vi.fn(), upsert: vi.fn() },
   plan: { create: vi.fn() },
 }

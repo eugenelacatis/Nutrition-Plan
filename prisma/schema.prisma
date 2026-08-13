@@ -41,6 +41,7 @@ model DailyLog {
   createdAt       DateTime @default(now())
 
   @@index([userId])
+  @@unique([userId, date])
 }
 
 model Plan {

@@ -34,7 +34,7 @@ describe('POST /api/nutrition/daily-log', () => {
     const res = await POST(jsonRequest(VALID_LOG))
 
     expect(res.status).toBe(401)
-    expect(prismaMock.dailyLog.create).not.toHaveBeenCalled()
+    expect(prismaMock.dailyLog.upsert).not.toHaveBeenCalled()
   })
 
   it.each(['weight', 'sleepHours', 'wakeTime', 'digestionRating'])(
@@ -46,7 +46,7 @@ describe('POST /api/nutrition/daily-log', () => {
       const res = await POST(jsonRequest(body))
 
       expect(res.status).toBe(400)
-      expect(prismaMock.dailyLog.create).not.toHaveBeenCalled()
+      expect(prismaMock.dailyLog.upsert).not.toHaveBeenCalled()
     }
   )
 
@@ -56,7 +56,7 @@ describe('POST /api/nutrition/daily-log', () => {
     const res = await POST(jsonRequest({ ...VALID_LOG, digestionRating: 0 }))
 
     expect(res.status).toBe(400)
-    expect(prismaMock.dailyLog.create).not.toHaveBeenCalled()
+    expect(prismaMock.dailyLog.upsert).not.toHaveBeenCalled()
   })
 
   it('rejects a digestion rating above 5', async () => {
@@ -69,7 +69,7 @@ describe('POST /api/nutrition/daily-log', () => {
 
   it.each([1, 2, 3, 4, 5])('accepts a digestion rating of %i', async (digestionRating) => {
     authedAs('user-1')
-    prismaMock.dailyLog.create.mockResolvedValue({ id: 'log-1', ...VALID_LOG, digestionRating })
+    prismaMock.dailyLog.upsert.mockResolvedValue({ id: 'log-1', ...VALID_LOG, digestionRating })
 
     const res = await POST(jsonRequest({ ...VALID_LOG, digestionRating }))
 
@@ -78,14 +78,20 @@ describe('POST /api/nutrition/daily-log', () => {
 
   it('creates a log scoped to the authenticated user with parsed numeric fields', async () => {
     authedAs('user-1')
-    prismaMock.dailyLog.create.mockResolvedValue({ id: 'log-1', ...VALID_LOG })
+    prismaMock.dailyLog.upsert.mockResolvedValue({ id: 'log-1', ...VALID_LOG })
 
     await POST(jsonRequest({ weight: '180.5', sleepHours: '7.5', wakeTime: '06:30', digestionRating: '4' }))
 
-    expect(prismaMock.dailyLog.create).toHaveBeenCalledWith(
+    expect(prismaMock.dailyLog.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({
+        create: expect.objectContaining({
           userId: 'user-1',
+          weight: 180.5,
+          sleepHours: 7.5,
+          wakeTime: '06:30',
+          digestionRating: 4,
+        }),
+        update: expect.objectContaining({
           weight: 180.5,
           sleepHours: 7.5,
           wakeTime: '06:30',
@@ -97,24 +103,45 @@ describe('POST /api/nutrition/daily-log', () => {
 
   it('defaults date to today (YYYY-MM-DD) when not provided', async () => {
     authedAs('user-1')
-    prismaMock.dailyLog.create.mockResolvedValue({ id: 'log-1', ...VALID_LOG })
+    prismaMock.dailyLog.upsert.mockResolvedValue({ id: 'log-1', ...VALID_LOG })
 
     await POST(jsonRequest(VALID_LOG))
 
     const todayStr = new Date().toISOString().split('T')[0]
-    expect(prismaMock.dailyLog.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ date: todayStr }) })
+    expect(prismaMock.dailyLog.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId_date: { userId: 'user-1', date: todayStr } },
+        create: expect.objectContaining({ date: todayStr }),
+      })
     )
   })
 
   it('uses the provided date when given', async () => {
     authedAs('user-1')
-    prismaMock.dailyLog.create.mockResolvedValue({ id: 'log-1', ...VALID_LOG })
+    prismaMock.dailyLog.upsert.mockResolvedValue({ id: 'log-1', ...VALID_LOG })
 
     await POST(jsonRequest({ ...VALID_LOG, date: '2026-01-01' }))
 
-    expect(prismaMock.dailyLog.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ date: '2026-01-01' }) })
+    expect(prismaMock.dailyLog.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId_date: { userId: 'user-1', date: '2026-01-01' } },
+        create: expect.objectContaining({ date: '2026-01-01' }),
+      })
+    )
+  })
+
+  it('updates an existing log for the same user+date instead of creating a duplicate', async () => {
+    authedAs('user-1')
+    prismaMock.dailyLog.upsert.mockResolvedValue({ id: 'log-1', ...VALID_LOG, weight: 182 })
+
+    await POST(jsonRequest({ ...VALID_LOG, weight: 182, date: '2026-01-01' }))
+
+    expect(prismaMock.dailyLog.upsert).toHaveBeenCalledTimes(1)
+    expect(prismaMock.dailyLog.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId_date: { userId: 'user-1', date: '2026-01-01' } },
+        update: expect.objectContaining({ weight: 182 }),
+      })
     )
   })
 })
