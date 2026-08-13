@@ -2,32 +2,53 @@
 
 ## What is this?
 
-The Nutrition Plan is an innovative web application that automates meal planning based on individual goals and preferences. As a fitness enthusiast and bodybuilder, I recognized the need for personalized nutrition plans that go beyond the typical "chicken, broccoli, and rice" meals. A tailored diet is crucial for adherence and ultimately, weight loss and fitness success.
-
-## Why does this exist?
-
-My goal with this project is to challenge myself as a solo developer and further develop my skills in software engineering, while applying my knowledge in nutrition and kinesiology. The Nutrition Plan offers personalized diet plans, catering to individuals seeking general health to athletes looking to optimize their performance in their respective sports.
-
-The key insight is that **bodybuilders have specific nutrition needs**:
-
-- **High protein requirements** (1.2-1.5g per lb bodyweight)
-- **Strict meal timing** for optimal muscle growth
-- **Detailed macro tracking** for contest preparation
-- **Supplement integration** for enhanced results
-- **Contest prep cycles** with specific nutritional phases
-
-Traditional nutrition apps treat everyone the same. This app recognizes that a bodybuilder preparing for a contest has vastly different needs than someone just trying to eat healthy.
+The Nutrition Plan is a web app that generates and tracks personalized bodybuilding nutrition plans. Most nutrition apps treat everyone the same; this one is built around the specific needs of bodybuilders — high protein targets, strict meal timing, and detailed macro tracking — and pairs an AI-generated meal plan with daily tracking of weight, sleep, and digestion so you can see what's actually working.
 
 ## How it works
 
-The app uses Claude-powered meal generation to create personalized nutrition plans based on:
-- **Fitness goals** (weight loss, muscle gain, maintenance, energy boost)
-- **Dietary restrictions** (vegetarian, gluten-free, etc.)
-- **Nutrition targets** (calories, protein, carbs, fat)
+1. **Generate a plan** — pick a goal (weight loss, muscle gain, maintenance) and optional dietary restrictions; Claude generates a meal plan hitting specific macro targets for that goal.
+2. **Log daily metrics** — weight, sleep hours, wake time, and a digestion rating (1-5).
+3. **Confirm meals** — mark each meal as eaten as planned, substituted (with automatic macro recalculation against a food database), or skipped.
+4. **Check your score** — a dashboard computes a weighted score from sleep, digestion, and weight-trend data, with recommendations for what to prioritize.
 
-The system is optimized for bodybuilder nutrition patterns, with specific meal timing, high protein requirements, and supplement integration that make the generated plans realistic and useful.
+You can also try a real AI-generated plan from the landing page before signing up — no account needed.
 
-## Project Structure
+## Getting started
+
+Requirements: Node 18+, a Postgres database (e.g. a free [Neon](https://neon.tech) instance), and an [Anthropic API key](https://console.anthropic.com/).
+
+```bash
+npm install
+cp .env.example .env        # then fill in the values below
+npx prisma migrate dev
+npm run db:seed             # seeds the food database used for meal substitutions
+npm run dev
+```
+
+The app runs at `http://localhost:3000`.
+
+### Environment variables
+
+`.env`:
+```env
+DATABASE_URL="postgresql://user:password@host/dbname"
+AUTH_SECRET="generate_with_npx_auth_secret"
+ANTHROPIC_API_KEY="your_anthropic_api_key_here"
+```
+
+`ANTHROPIC_API_KEY` is optional for local dev — without it, plan generation falls back to a static demo plan instead of calling Claude.
+
+## Tech stack
+
+- **Next.js 14** (App Router) — frontend + API routes
+- **TypeScript**
+- **Tailwind CSS**
+- **Prisma + Postgres** — data persistence
+- **Auth.js (NextAuth v5)** — credentials-based authentication
+- **Anthropic Claude API** — AI-powered meal generation (structured outputs)
+- **Vitest** — unit/integration tests for the API layer
+
+## Project structure
 
 ```
 Nutrition-Plan/
@@ -35,63 +56,36 @@ Nutrition-Plan/
 │   ├── app/            # Next.js App Router pages + API routes
 │   │   └── api/
 │   │       ├── auth/       # Auth.js handlers + signup
-│   │       └── nutrition/  # Meal plan + daily log routes
+│   │       └── nutrition/  # Meal plan, daily log, and scoring routes
 │   ├── components/     # React components
 │   ├── contexts/       # React contexts
-│   ├── lib/            # API client, Prisma client, nutrition AI service
+│   ├── lib/            # API client, Prisma client, nutrition AI service, auth logic
 │   └── auth.ts          # Auth.js configuration
 ├── prisma/
-│   └── schema.prisma    # User + DailyLog models (SQLite)
+│   ├── schema.prisma    # Data models (Postgres)
+│   └── seed.ts           # Seeds the Food table
 └── README.md
 ```
 
-## Getting Started
+## Key API routes
+
+- `POST /api/nutrition/generate-plan` — generate a personalized meal plan (requires auth)
+- `GET /api/nutrition/try-plan/[goals]` — get a real AI-generated demo plan without an account
+- `POST /api/nutrition/daily-log` — log weight, sleep, wake time, digestion rating
+- `POST /api/nutrition/meal-log` — confirm/substitute/skip a planned meal
+- `GET /api/nutrition/optimal-score` — computed sleep/digestion/weight-trend score with recommendations
+
+## Testing
 
 ```bash
-npm install
-npx prisma migrate dev
-npm run dev
+npm test
 ```
 
-### Environment Variables
+Covers the score calculation, meal substitution macro math, daily-log and signup validation, the trial-plan cache, and credential verification.
 
-**`.env`**:
-```env
-DATABASE_URL="file:./dev.db"
-AUTH_SECRET="generate_with_openssl_rand_base64_32"
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-```
+## Current status
 
-## Tech Stack
-
-- **Next.js 14** - React framework with App Router (frontend + API routes)
-- **TypeScript** - Type-safe development
-- **Tailwind CSS** - Utility-first styling
-- **Prisma + SQLite** - Data persistence for users and daily logs
-- **Auth.js (NextAuth v5)** - Credentials-based authentication
-- **Anthropic Claude API** - AI-powered meal generation (structured outputs)
-
-## Features
-
-- **Bodybuilder-optimized nutrition planning**
-- **AI-powered meal generation**
-- **Multi-step plan creation**
-- **Detailed meal breakdowns**
-- **Responsive design**
-- **User authentication (demo)**
-- **Plan management**
-
-## API Endpoints
-
-### POST /api/nutrition/generate-plan
-Generate a personalized meal plan based on goals and dietary restrictions.
-
-### GET /api/nutrition/demo-plan/:goals
-Get a demo meal plan for specific fitness goals.
-
-## Design Philosophy
-
-The app emphasizes **bodybuilder-first** nutrition planning, recognizing that serious fitness enthusiasts have specific needs, constraints, and goals. This approach ensures that meal plans are not just nutritionally sound, but also practical and sustainable for dedicated athletes.
+This is a solo project under active development. Core tracking, plan generation, and scoring work end-to-end for a single user. Multi-user/coach features, schedule integration, and pattern-recognition recommendations are not built yet — see `docs/roadmap.md` for what's planned next.
 
 ## Deployment
 
@@ -100,4 +94,4 @@ The app emphasizes **bodybuilder-first** nutrition planning, recognizing that se
 vercel --prod
 ```
 
-SQLite works for local development; for production, point `DATABASE_URL` at a hosted Postgres/SQLite-compatible database and update `prisma/schema.prisma`'s `provider` accordingly.
+Set `DATABASE_URL`, `AUTH_SECRET`, and `ANTHROPIC_API_KEY` as environment variables in the Vercel project settings, then run `npx prisma migrate deploy` against the production database before first deploy.
