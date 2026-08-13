@@ -135,6 +135,22 @@ export interface OptimalScore {
   };
 }
 
+export interface CalendarDaySummary {
+  date: string;
+  hasLog: boolean;
+  score: number | null;
+  weight: number | null;
+  sleepHours: number | null;
+  wakeTime: string | null;
+  digestionRating: number | null;
+  meals: { name: string; slot: string; status: 'as_planned' | 'substituted' | 'skipped' }[];
+}
+
+export interface CalendarMonth {
+  month: string;
+  days: CalendarDaySummary[];
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -273,6 +289,11 @@ class ApiClient {
 
   async getOptimalScore(): Promise<{ success: boolean; data: OptimalScore }> {
     return this.request('/nutrition/optimal-score');
+  }
+
+  async getCalendarMonth(year: number, month: number): Promise<{ success: boolean; data: CalendarMonth }> {
+    const monthParam = `${year}-${String(month).padStart(2, '0')}`;
+    return this.request(`/nutrition/calendar?month=${monthParam}`);
   }
 
   async getGoal(): Promise<{ success: boolean; data: UserGoal }> {

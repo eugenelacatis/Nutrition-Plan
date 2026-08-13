@@ -40,6 +40,9 @@ export default function Navigation() {
               <Link href="/plans" className={navLinkClass}>
                 Plans
               </Link>
+              <Link href="/dashboard/calendar" className={navLinkClass}>
+                Calendar
+              </Link>
             </div>
           </div>
           <div className="hidden sm:flex items-center gap-6">
@@ -122,6 +125,12 @@ export default function Navigation() {
               className="text-ink-900/70 hover:text-ink-900 block px-4 py-2 text-base"
             >
               Plans
+            </Link>
+            <Link
+              href="/dashboard/calendar"
+              className="text-ink-900/70 hover:text-ink-900 block px-4 py-2 text-base"
+            >
+              Calendar
             </Link>
           </div>
           <div className="pt-4 pb-3 border-t border-ink-900/15">

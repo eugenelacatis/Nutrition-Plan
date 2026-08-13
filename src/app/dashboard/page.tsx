@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import DailyLogForm from '@/components/DailyLogForm'
 import OptimalScoreDashboard from '@/components/ScoreDashboard'
 import GoalSettingsForm from '@/components/GoalSettingsForm'
@@ -30,6 +31,9 @@ export default function DashboardPage() {
           <div className="flex items-start justify-between">
             <h1 className="font-display text-4xl text-ink-900">Your score</h1>
             <div className="flex gap-3">
+              <Link href="/dashboard/calendar">
+                <Button variant="secondary">View calendar</Button>
+              </Link>
               <Button variant="secondary" onClick={() => setShowLogForm(!showLogForm)}>
                 {showLogForm ? 'Cancel' : 'Log daily metrics'}
               </Button>
