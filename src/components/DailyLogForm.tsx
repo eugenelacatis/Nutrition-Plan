@@ -86,7 +86,7 @@ export default function DailyLogForm({ onLogSubmitted }: DailyLogFormProps) {
 
       <div>
         <label className="text-sm text-ink-900/60">
-          Yesterday's digestion rating
+          Yesterday&apos;s digestion rating
         </label>
         <div className="flex items-center gap-4 mt-2">
           {[1, 2, 3, 4, 5].map((rating) => (

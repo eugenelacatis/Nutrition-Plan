@@ -151,6 +151,22 @@ export interface CalendarMonth {
   days: CalendarDaySummary[];
 }
 
+export type TrendRange = '90d' | '6m' | '1y';
+
+export interface TrendPoint {
+  date: string;
+  weight: number;
+  sleepHours: number;
+  digestionRating: number;
+}
+
+export interface TrendsResponse {
+  range: TrendRange;
+  start: string;
+  end: string;
+  logs: TrendPoint[];
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -294,6 +310,10 @@ class ApiClient {
   async getCalendarMonth(year: number, month: number): Promise<{ success: boolean; data: CalendarMonth }> {
     const monthParam = `${year}-${String(month).padStart(2, '0')}`;
     return this.request(`/nutrition/calendar?month=${monthParam}`);
+  }
+
+  async getTrends(range: TrendRange): Promise<{ success: boolean; data: TrendsResponse }> {
+    return this.request(`/nutrition/trends?range=${range}`);
   }
 
   async getGoal(): Promise<{ success: boolean; data: UserGoal }> {

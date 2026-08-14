@@ -214,7 +214,7 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
       {/* Step 1: Weight Input */}
       {step === 1 && (
         <div className="space-y-6">
-          <h3 className="font-display text-xl text-ink-900">What's your current weight?</h3>
+          <h3 className="font-display text-xl text-ink-900">What&apos;s your current weight?</h3>
           <div className="space-y-4">
             <WeightInput
               label="Weight"
@@ -244,7 +244,7 @@ export default function CreatePlanForm({ onPlanCreated }: CreatePlanFormProps) {
       {/* Step 2: Goal Selection */}
       {step === 2 && (
         <div className="space-y-6">
-          <h3 className="font-display text-xl text-ink-900">What's your primary goal?</h3>
+          <h3 className="font-display text-xl text-ink-900">What&apos;s your primary goal?</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {goals.map((goal) => (
               <button
