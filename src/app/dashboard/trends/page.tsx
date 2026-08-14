@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { apiClient, type TrendPoint } from '@/lib/api'
 import type { TrendRange } from '@/lib/dateRange'
+import { rollingAverage } from '@/lib/rollingAverage'
 import { fromLbs, type WeightUnit } from '@/lib/weight'
 import Card from '@/components/ui/Card'
 import TrendRangeToggle from '@/components/trends/TrendRangeToggle'
@@ -37,6 +38,12 @@ export default function TrendsPage() {
     })
   }, [])
 
+  const weightPoints = useMemo(() => {
+    const weights = points.map((p) => fromLbs(p.weight, weightUnit))
+    const averages = rollingAverage(weights, 7)
+    return points.map((p, i) => ({ ...p, weight: weights[i], weightAvg: averages[i] }))
+  }, [points, weightUnit])
+
   return (
     <div className="min-h-screen bg-cream-50 py-16">
       <div className="max-w-6xl mx-auto px-6">
@@ -59,10 +66,10 @@ export default function TrendsPage() {
                   <p className="text-sm uppercase tracking-widest text-ink-900/40 mb-3">Weight</p>
                   <Card>
                     <TrendChart
-                      data={points}
+                      data={weightPoints}
                       dataKey="weight"
+                      avgKey="weightAvg"
                       color="rgba(232, 137, 74, 1)"
-                      valueTransform={(v) => fromLbs(v, weightUnit)}
                       formatValue={(v) => `${Math.round(v * 10) / 10}${weightUnit}`}
                     />
                   </Card>
